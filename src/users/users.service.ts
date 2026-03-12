@@ -58,4 +58,8 @@ export class UsersService {
     await this.findOne(id);
     return this.usersRepository.remove(id);
   }
+
+  async findByEmail(email: string) {
+    return this.usersRepository.findByEmail(email);
+  }
 }

@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PostRepository } from './posts.repository';
 import { CreatePostDto, UpdatePostDto } from './dto';
 
 @Injectable()
 export class PostService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private readonly postRepository: PostRepository,
+    private readonly prisma: PrismaService,
+  ) {}
 
   // Create - Tạo bài đăng mới
   async create(createPostDto: CreatePostDto) {
@@ -20,17 +24,7 @@ export class PostService {
         );
       }
 
-      return await this.prisma.post.create({
-        data: {
-          title: createPostDto.title,
-          content: createPostDto.content,
-          published: createPostDto.published || false,
-          authorId: createPostDto.authorId,
-        },
-        include: {
-          author: true,
-        },
-      });
+      return await this.postRepository.create(createPostDto);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -42,25 +36,7 @@ export class PostService {
   // Read - Lấy tất cả bài đăng
   async findAll(skip: number = 0, take: number = 10) {
     try {
-      const posts = await this.prisma.post.findMany({
-        skip,
-        take,
-        include: {
-          author: true,
-        },
-        orderBy: {
-          id: 'desc',
-        },
-      });
-
-      const total = await this.prisma.post.count();
-
-      return {
-        data: posts,
-        total,
-        page: Math.floor(skip / take) + 1,
-        pageSize: take,
-      };
+      return await this.postRepository.findAll(skip, take);
     } catch (error) {
       throw new BadRequestException('Failed to fetch posts');
     }
@@ -69,12 +45,7 @@ export class PostService {
   // Read - Lấy bài đăng theo ID
   async findOne(id: number) {
     try {
-      const post = await this.prisma.post.findUnique({
-        where: { id },
-        include: {
-          author: true,
-        },
-      });
+      const post = await this.postRepository.findOne(id);
 
       if (!post) {
         throw new NotFoundException(`Post with ID ${id} not found`);
@@ -100,28 +71,7 @@ export class PostService {
         throw new NotFoundException(`User with ID ${authorId} not found`);
       }
 
-      const posts = await this.prisma.post.findMany({
-        where: { authorId },
-        skip,
-        take,
-        include: {
-          author: true,
-        },
-        orderBy: {
-          id: 'desc',
-        },
-      });
-
-      const total = await this.prisma.post.count({
-        where: { authorId },
-      });
-
-      return {
-        data: posts,
-        total,
-        page: Math.floor(skip / take) + 1,
-        pageSize: take,
-      };
+      return await this.postRepository.findByAuthor(authorId, skip, take);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -134,25 +84,13 @@ export class PostService {
   async update(id: number, updatePostDto: UpdatePostDto) {
     try {
       // Kiểm tra bài đăng tồn tại
-      const post = await this.prisma.post.findUnique({
-        where: { id },
-      });
+      const post = await this.postRepository.findOne(id);
 
       if (!post) {
         throw new NotFoundException(`Post with ID ${id} not found`);
       }
 
-      return await this.prisma.post.update({
-        where: { id },
-        data: {
-          title: updatePostDto.title || post.title,
-          content: updatePostDto.content !== undefined ? updatePostDto.content : post.content,
-          published: updatePostDto.published !== undefined ? updatePostDto.published : post.published,
-        },
-        include: {
-          author: true,
-        },
-      });
+      return await this.postRepository.update(id, updatePostDto, post);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -164,17 +102,13 @@ export class PostService {
   // Delete - Xóa bài đăng
   async remove(id: number) {
     try {
-      const post = await this.prisma.post.findUnique({
-        where: { id },
-      });
+      const post = await this.postRepository.findOne(id);
 
       if (!post) {
         throw new NotFoundException(`Post with ID ${id} not found`);
       }
 
-      await this.prisma.post.delete({
-        where: { id },
-      });
+      await this.postRepository.remove(id);
 
       return {
         message: `Post with ID ${id} has been deleted successfully`,
@@ -190,23 +124,13 @@ export class PostService {
   // Publish - Xuất bản bài đăng
   async publish(id: number) {
     try {
-      const post = await this.prisma.post.findUnique({
-        where: { id },
-      });
+      const post = await this.postRepository.findOne(id);
 
       if (!post) {
         throw new NotFoundException(`Post with ID ${id} not found`);
       }
 
-      return await this.prisma.post.update({
-        where: { id },
-        data: {
-          published: true,
-        },
-        include: {
-          author: true,
-        },
-      });
+      return await this.postRepository.publish(id);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
@@ -218,23 +142,13 @@ export class PostService {
   // Unpublish - Bỏ xuất bản bài đăng
   async unpublish(id: number) {
     try {
-      const post = await this.prisma.post.findUnique({
-        where: { id },
-      });
+      const post = await this.postRepository.findOne(id);
 
       if (!post) {
         throw new NotFoundException(`Post with ID ${id} not found`);
       }
 
-      return await this.prisma.post.update({
-        where: { id },
-        data: {
-          published: false,
-        },
-        include: {
-          author: true,
-        },
-      });
+      return await this.postRepository.unpublish(id);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw error;
