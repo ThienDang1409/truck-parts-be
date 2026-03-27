@@ -32,7 +32,7 @@ export class UsersService {
     return this.usersRepository.findAll();
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const user = await this.usersRepository.findOne(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -41,7 +41,7 @@ export class UsersService {
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     await this.findOne(id);
 
     try {
@@ -54,12 +54,24 @@ export class UsersService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     await this.findOne(id);
     return this.usersRepository.remove(id);
   }
 
   async findByEmail(email: string) {
     return this.usersRepository.findByEmail(email);
+  }
+
+  async updateRefreshToken(id: string, refreshToken: string) {
+    return this.usersRepository.update(id, { refreshToken } as any);
+  }
+
+  async clearRefreshToken(id: string) {
+    return this.usersRepository.update(id, { refreshToken: null } as any);
+  }
+
+  async findByPreRegisterToken(token: string) {
+    return this.usersRepository.findByPreRegisterToken(token);
   }
 }

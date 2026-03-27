@@ -61,7 +61,7 @@ export class PostService {
   }
 
   // Read - Lấy bài đăng theo tác giả
-  async findByAuthor(authorId: number, skip: number = 0, take: number = 10) {
+  async findByAuthor(authorId: string, skip: number = 0, take: number = 10) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id: authorId },

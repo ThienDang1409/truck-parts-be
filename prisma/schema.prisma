@@ -12,17 +12,309 @@ datasource db {
   provider = "postgresql"
 }
 
-model User { 
-  id    Int     @id @default(autoincrement()) 
-  email String  @unique
-  name  String?
-  posts Post[]
-} 
-model Post { 
-  id        Int     @id @default(autoincrement()) 
+enum Role {
+  ADMIN
+  USER
+}
+
+enum StockStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+  LOW_STOCK
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPING
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  BANK_TRANSFER
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  password         String
+  fullName         String
+  phone            String?
+  avatarUrl        String?
+  role             Role      @default(USER)
+  isActive         Boolean   @default(true)
+  lastLogin        DateTime?
+  refreshToken     String?
+  preRegisterToken String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+
+  orders      Order[]
+  cartItems   CartItem[]
+  wishlist    WishlistItem[]
+  posts       Post[]
+  blogPosts   BlogPost[]
+  addresses   Address[]
+}
+
+model Brand {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  imageUrl  String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  products  Product[]
+}
+
+model Category {
+  id           String                @id @default(uuid())
+  slug         String                @unique
+  imageUrl     String?
+  sortOrder    Int                   @default(0)
+  isActive     Boolean               @default(true)
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  deletedAt    DateTime?
+  translations CategoryTranslation[]
+  products     Product[]
+  subCategories SubCategory[]
+}
+
+model SubCategory {
+  id           String    @id @default(uuid())
+  category     Category  @relation(fields: [categoryId], references: [id])
+  categoryId   String
+  name         String
+  slug         String    @unique
+  imageUrl     String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  products     Product[]
+}
+
+model CategoryTranslation {
+  id          String   @id @default(uuid())
+  category    Category @relation(fields: [categoryId], references: [id])
+  categoryId  String
+  language    String
+  name        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Product {
+  id               String               @id @default(uuid())
+  category         Category             @relation(fields: [categoryId], references: [id])
+  categoryId       String
+  subCategory      SubCategory?         @relation(fields: [subCategoryId], references: [id])
+  subCategoryId    String?
+  brand            Brand?               @relation(fields: [brandId], references: [id])
+  brandId          String?
+  slug             String               @unique
+  sku              String
+  partNumber       String
+  stockQuantity    Int
+  stockStatus      StockStatus
+  warrantyMonths   Int
+  isFeatured       Boolean              @default(false)
+  isNew            Boolean              @default(false)
+  viewCount        Int                  @default(0)
+  thumbnailUrl     String
+  additionalImages String?
+  price            Decimal
+  salePrice        Decimal?
+  isActive         Boolean              @default(true)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  deletedAt        DateTime?
+  translations     ProductTranslation[]
+}
+
+model ProductTranslation {
+  id               String   @id @default(uuid())
+  product          Product  @relation(fields: [productId], references: [id])
+  productId        String
+  language         String
+  name             String
+  shortDescription String
+  description      String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Province {
+  id        String   @id @default(uuid())
+  name      String
+  code      String   @unique
+  wards     Ward[]
+  addresses Address[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Ward {
+  id         String   @id @default(uuid())
+  name       String
+  code       String   @unique
+  province   Province @relation(fields: [provinceId], references: [id])
+  provinceId String
+  addresses  Address[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  province   Province @relation(fields: [provinceId], references: [id])
+  provinceId String
+  ward       Ward     @relation(fields: [wardId], references: [id])
+  wardId     String
+  street     String
+  postalCode String?
+  default    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime?
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  url       String
+  type      String
+  publicId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogCategory {
+  id        String     @id @default(uuid())
+  name      String
+  slug      String     @unique
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  deletedAt DateTime?
+  posts     BlogPost[]
+}
+
+model BlogPost {
+  id             String        @id @default(uuid())
+  title          String
+  slug           String        @unique
+  excerpt        String
+  content        String
+  featuredImage  String
+  status         BlogStatus
+  viewCount      Int           @default(0)
+  author         User          @relation(fields: [authorId], references: [id])
+  authorId       String
+  category       BlogCategory? @relation(fields: [categoryId], references: [id])
+  categoryId     String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+}
+
+model Contact {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CartItem {
+  id        String    @id @default(uuid())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  productId String
+  quantity  Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model WishlistItem {
+  id        String    @id @default(uuid())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    String
+  productId String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Order {
+  id               String        @id @default(uuid())
+  user             User          @relation(fields: [userId], references: [id])
+  userId           String
+  totalPrice       Decimal
+  paymentMethod    PaymentMethod
+  paymentStatus    PaymentStatus @default(PENDING)
+  shippingMethodId String
+  addressId        String?
+  status           OrderStatus   @default(PENDING)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+  orderItems       OrderItem[]
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    String
+  productId  String
+  quantity   Int
+  unitPrice  Decimal
+  totalPrice Decimal
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model ShippingMethod {
+  id        String    @id @default(uuid())
+  code      String    @unique
+  name      String
+  price     Decimal
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// Keep legacy Post model for existing snippet compatibility
+model Post {
+  id        Int     @id @default(autoincrement())
   title     String
   content   String?
-  published Boolean @default(false) 
-  author    User    @relation(fields: [authorId], references: [id]) 
-  authorId  Int
-} 
+  published Boolean @default(false)
+  author    User    @relation(fields: [authorId], references: [id])
+  authorId  String
+}

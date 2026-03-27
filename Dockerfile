@@ -1,22 +1,19 @@
 FROM node:20-alpine
 
-WORKDIR /app
-
-# Copy package files
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy built application
 COPY dist ./dist
-
-# Copy Prisma files
 COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
 COPY .env .env
 
-# Expose port
+# Xóa devDependencies trước
+RUN npm prune --omit=dev
+
+# Generate sau khi prune để không bị xóa
+RUN npx prisma generate
+
 EXPOSE 3000
 
-# Start application
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main.js"]

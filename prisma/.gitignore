@@ -1,0 +1,5 @@
+# Export files contain sensitive data
+exports/
+
+# Generated files
+*.tsbuildinfo

@@ -50,7 +50,7 @@ export class PostRepository {
     });
   }
 
-  findByAuthor(authorId: number, skip: number = 0, take: number = 10) {
+  findByAuthor(authorId: string, skip: number = 0, take: number = 10) {
     return Promise.all([
       this.prisma.post.findMany({
         where: { authorId },

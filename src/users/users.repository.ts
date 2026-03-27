@@ -13,31 +13,46 @@ export class UsersRepository {
       select: {
         id: true,
         email: true,
-        name: true,
+        fullName: true,
+        phone: true,
+        avatarUrl: true,
+        role: true,
       },
     });
   }
 
   findAll() {
     return this.prisma.user.findMany({
+      where: { deletedAt: null },
       orderBy: {
-        id: 'desc',
+        createdAt: 'desc',
       },
       select: {
         id: true,
         email: true,
-        name: true,
+        fullName: true,
+        phone: true,
+        avatarUrl: true,
+        role: true,
+        isActive: true,
       },
     });
   }
 
-  findOne(id: number) {
-    return this.prisma.user.findUnique({
-      where: { id },
+  findOne(id: string) {
+    return this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
       select: {
         id: true,
         email: true,
-        name: true,
+        password: true,
+        fullName: true,
+        phone: true,
+        avatarUrl: true,
+        role: true,
+        isActive: true,
+        lastLogin: true,
+        refreshToken: true,
       },
     });
   }
@@ -48,30 +63,55 @@ export class UsersRepository {
       select: {
         id: true,
         email: true,
-        name: true,
+        password: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+        refreshToken: true,
+        preRegisterToken: true,
       },
     });
   }
 
-  update(id: number, data: UpdateUserDto) {
+  findByPreRegisterToken(token: string) {
+    return this.prisma.user.findFirst({
+      where: { preRegisterToken: token, deletedAt: null },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        fullName: true,
+        role: true,
+        isActive: true,
+        phone: true,
+        preRegisterToken: true,
+      },
+    });
+  }
+
+  update(id: string, data: UpdateUserDto) {
     return this.prisma.user.update({
       where: { id },
       data,
       select: {
         id: true,
         email: true,
-        name: true,
+        fullName: true,
+        phone: true,
+        avatarUrl: true,
+        role: true,
+        isActive: true,
       },
     });
   }
 
-  remove(id: number) {
-    return this.prisma.user.delete({
+  remove(id: string) {
+    return this.prisma.user.update({
       where: { id },
+      data: { deletedAt: new Date() },
       select: {
         id: true,
         email: true,
-        name: true,
       },
     });
   }

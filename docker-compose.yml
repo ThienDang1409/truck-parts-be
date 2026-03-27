@@ -52,7 +52,8 @@ services:
       - .:/app
       - /app/node_modules
       - /app/dist
-    command: npm run start:dev
+    command: node dist/src/main.js
+
 
 volumes:
   postgres_data:

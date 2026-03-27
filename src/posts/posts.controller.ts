@@ -34,7 +34,7 @@ export class PostController {
   // GET /posts/author/:authorId - Lấy bài đăng theo tác giả
   @Get('author/:authorId')
   findByAuthor(
-    @Param('authorId', ParseIntPipe) authorId: number,
+    @Param('authorId') authorId: string,
     @Query('skip', new ParseIntPipe({ optional: true })) skip: number = 0,
     @Query('take', new ParseIntPipe({ optional: true })) take: number = 10,
   ) {
